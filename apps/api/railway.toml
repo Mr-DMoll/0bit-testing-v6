@@ -1,0 +1,17 @@
+[build]
+builder = "nixpacks"
+# Order matters: @repo/api imports @repo/database's compiled dist/index.js at
+# runtime (node can't use the "source" export condition tsx dev mode relies
+# on), so a plain `generate` here (Prisma client only, no tsc) leaves dist/
+# missing on a fresh build container and the API crashes on boot. This must
+# match the bootstrapper's hardcoded build command exactly (see o-bit's
+# bootstrapper.worker.ts) since new projects generated from this template
+# get this same command.
+buildCommand = "cd ../.. && pnpm install --frozen-lockfile && pnpm --filter @repo/types build && pnpm --filter @repo/database build && pnpm --filter @repo/api build"
+
+[deploy]
+startCommand = "node dist/server.js"
+healthcheckPath = "/api/v1/system/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
